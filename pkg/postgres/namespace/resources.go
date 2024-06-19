@@ -2,44 +2,49 @@ package namespace
 
 import (
 	"github.com/pkg/errors"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
-	puluminamekubeoutput "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/provider/kubernetes/output"
-	pulumikubernetes "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes"
-	pulk8scv1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
-	v12 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
+	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
+	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type Input struct {
-	KubernetesProvider *pulumikubernetes.Provider
-	NamespaceName      string
-	Labels             map[string]string
-}
-
-func Resources(ctx *pulumi.Context, input *Input) (*pulk8scv1.Namespace, error) {
-	namespace, err := addNamespace(ctx, input)
+func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
+	namespace, err := addNamespace(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to add namespace")
 	}
-	return namespace, nil
+
+	var ctxConfig = ctx.Value(postgresdbcontextconfig.Key).(postgresdbcontextconfig.ContextConfig)
+
+	addNamespaceToContext(&ctxConfig, namespace)
+	ctx = ctx.WithValue(postgresdbcontextconfig.Key, ctxConfig)
+	return ctx, nil
 }
 
-func addNamespace(ctx *pulumi.Context, input *Input) (*pulk8scv1.Namespace, error) {
-	ns, err := pulk8scv1.NewNamespace(ctx, input.NamespaceName, &pulk8scv1.NamespaceArgs{
+func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
+	var i = extractInput(ctx)
+
+	ns, err := kubernetescorev1.NewNamespace(ctx, i.NamespaceName, &kubernetescorev1.NamespaceArgs{
 		ApiVersion: pulumi.String("v1"),
-		Kind:       pulumi.String("AddedNamespace"),
-		Metadata: v12.ObjectMetaPtrInput(&v12.ObjectMetaArgs{
-			Name:   pulumi.String(input.NamespaceName),
-			Labels: pulumi.ToStringMap(input.Labels),
+		Kind:       pulumi.String("Namespace"),
+		Metadata: metav1.ObjectMetaPtrInput(&metav1.ObjectMetaArgs{
+			Name:   pulumi.String(i.NamespaceName),
+			Labels: pulumi.ToStringMap(i.Labels),
 		}),
-	}, pulumi.Provider(input.KubernetesProvider))
+	}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "5s", Update: "5s", Delete: "5s"}),
+		pulumi.Provider(i.KubeProvider))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to add %s namespace", input.NamespaceName)
+		return nil, errors.Wrapf(err, "failed to add %s namespace", i.NamespaceName)
 	}
-	ctx.Export(GetNamespaceNameOutputName(), ns.Metadata.Name())
 	return ns, nil
 }
 
-func GetNamespaceNameOutputName() string {
-	return puluminamekubeoutput.Name(pulk8scv1.Namespace{}, englishword.EnglishWord_namespace.String())
+func addNamespaceToContext(existingConfig *postgresdbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &postgresdbcontextconfig.AddedResources{
+			Namespace: namespace,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.Namespace = namespace
 }

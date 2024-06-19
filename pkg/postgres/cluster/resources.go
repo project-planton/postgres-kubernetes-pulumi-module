@@ -11,92 +11,67 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/plantoncloud-inc/go-commons/kubernetes/manifest"
-	kubernetesv1model "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubecluster/model"
-	code2cloudv1deploypgcstackk8smodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/stack/kubernetes/model"
+	plantoncloudk8sv1model "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubecluster/model"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/istio/cert"
-	pulk8scv1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	pulumik8syaml "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/yaml"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	v1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	zalandov1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	k8sapimachineryv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-const (
-	// TeamId required by zalando operator
-	TeamId                    = "db"
-	EnvVarStunnelSidecarImage = "STUNNEL_SIDECAR_IMAGE"
-	StunnelContainerName      = englishword.EnglishWord_stunnel
-	StunnelContainerPort      = 15432
-	StunnelCertMountPath      = "/server/ca.pem"
 )
 
 func init() {
 
 }
 
-type Input struct {
-	WorkspaceDir                 string
-	NamespaceName                string
-	Namespace                    *pulk8scv1.Namespace
-	PostgresKubernetesStackInput *code2cloudv1deploypgcstackk8smodel.PostgresKubernetesStackInput
-	Labels                       map[string]string
-}
-
-func Resources(ctx *pulumi.Context, input *Input) error {
-	stunnelSidecarImage, isEnvVarSet := os.LookupEnv(EnvVarStunnelSidecarImage)
-	if !isEnvVarSet {
-		return errors.Errorf("%s environment variables is not set", EnvVarStunnelSidecarImage)
-	}
-	if err := addPostgresKubernetes(ctx, input, stunnelSidecarImage); err != nil {
+func Resources(ctx *pulumi.Context) error {
+	if err := addPostgresKubernetes(ctx); err != nil {
 		return errors.Wrap(err, "failed to add postgres cluster")
 	}
 	return nil
 }
 
-func addPostgresKubernetes(ctx *pulumi.Context, input *Input, stunnelSidecarImage string) error {
-	postgresKubernetesObject := buildPostgresKubernetesObject(input, stunnelSidecarImage)
+func addPostgresKubernetes(ctx *pulumi.Context) error {
+	i := extractInput(ctx)
+	postgresKubernetesObject := buildPostgresKubernetesObject(i)
 	resourceName := fmt.Sprintf("postgres-cluster-%s", postgresKubernetesObject.Name)
-	manifestPath := filepath.Join(input.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
+	manifestPath := filepath.Join(i.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
 	if err := manifest.Create(manifestPath, postgresKubernetesObject); err != nil {
 		return errors.Wrapf(err, "failed to create %s manifest file", manifestPath)
 	}
 	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{
 		File: manifestPath,
-	}, pulumi.DependsOn([]pulumi.Resource{input.Namespace}), pulumi.Parent(input.Namespace))
+	}, pulumi.DependsOn([]pulumi.Resource{i.Namespace}), pulumi.Parent(i.Namespace))
 	if err != nil {
 		return errors.Wrap(err, "failed to add virtual-service manifest")
 	}
 	return nil
 }
 
-func buildPostgresKubernetesObject(input *Input, stunnelSidecarImage string) *v1.Postgresql {
-	postgresql := &v1.Postgresql{
+func buildPostgresKubernetesObject(i *input) *zalandov1.Postgresql {
+	postgresql := &zalandov1.Postgresql{
 		TypeMeta: k8sapimachineryv1.TypeMeta{
-			APIVersion: "acid.zalan.do/v1",
+			APIVersion: "acid.zalan.do/zalandov1",
 			Kind:       "postgresql",
 		},
 		ObjectMeta: k8sapimachineryv1.ObjectMeta{
 			Name:      GetDatabaseName(),
-			Namespace: input.NamespaceName,
-			Labels:    input.Labels,
+			Namespace: i.NamespaceName,
+			Labels:    i.Labels,
 		},
-		Spec: v1.PostgresSpec{
-			PodAnnotations: map[string]string{"postgres-cluster-id": input.PostgresKubernetesStackInput.ResourceInput.Metadata.Name},
-			PostgresqlParam: v1.PostgresqlParam{
-				PgVersion:  PostgresVersion,
-				Parameters: getPostgresParameters(defaultPostgresParameters, input.PostgresKubernetesStackInput.ResourceInput.PostgresParameters),
+		Spec: zalandov1.PostgresSpec{
+			PodAnnotations: map[string]string{"postgres-cluster-id": i.ResourceId},
+			PostgresqlParam: zalandov1.PostgresqlParam{
+				PgVersion: PostgresVersion,
 			},
-			Volume: v1.Volume{
-				Size: input.PostgresKubernetesKubernetesStackInput.ResourceInput.PostgresKubernetes.Spec.Kubernetes.PostgresContainer.DiskSize,
+			Volume: zalandov1.Volume{
+				Size: i.ContainerSpec.DiskSize,
 			},
-			Patroni:           v1.Patroni{},
-			Resources:         getResources(input.PostgresKubernetesKubernetesStackInput.ResourceInput.PostgresKubernetes.Spec.Kubernetes.PostgresContainer.Resources),
+			Patroni:           zalandov1.Patroni{},
+			Resources:         getResources(i.ContainerSpec.Resources),
 			TeamID:            TeamId,
-			Users:             getUsers(input.PostgresKubernetesKubernetesStackInput.ResourceInput.PostgresKubernetesConfig),
-			NumberOfInstances: input.PostgresKubernetesKubernetesStackInput.ResourceInput.PostgresKubernetes.Spec.Kubernetes.PostgresContainer.Replicas,
-			Databases:         getDatabases(input.PostgresKubernetesKubernetesStackInput.ResourceInput.PostgresKubernetesConfig),
-			AdditionalVolumes: []v1.AdditionalVolume{
+			NumberOfInstances: i.ContainerSpec.Replicas,
+			AdditionalVolumes: []zalandov1.AdditionalVolume{
 				{
 					Name:      "stunnel-ca",
 					MountPath: StunnelCertMountPath,
@@ -114,18 +89,21 @@ func buildPostgresKubernetesObject(input *Input, stunnelSidecarImage string) *v1
 		},
 	}
 
-	addSidecars(input, postgresql, stunnelSidecarImage)
+	addSidecars(i, postgresql)
 
 	return postgresql
 }
 
-func addSidecars(input *Input, postgresql *v1.Postgresql, stunnelSidecarImage string) {
-	ingressSpec := input.PostgresKubernetesKubernetesStackInput.ResourceInput.Spec.Ingress
-	if ingressSpec != nil || !ingressSpec.IsEnabled ||
-		ingressSpec.IngressType != kubernetesworkloadingresstype.KubernetesWorkloadIngressType_ingress_controller {
-		return
+func addSidecars(i *input, postgresql *zalandov1.Postgresql) error {
+	stunnelSidecarImage, isEnvVarSet := os.LookupEnv(EnvVarStunnelSidecarImage)
+	if !isEnvVarSet {
+		return errors.Errorf("%s environment variables is not set", EnvVarStunnelSidecarImage)
 	}
-	postgresql.Spec.Sidecars = []v1.Sidecar{
+	if !i.IsIngressEnabled ||
+		i.IngressType != kubernetesworkloadingresstype.KubernetesWorkloadIngressType_ingress_controller {
+		return nil
+	}
+	postgresql.Spec.Sidecars = []zalandov1.Sidecar{
 		{
 			Name:        StunnelContainerName.String(),
 			Resources:   getStunnelSidecarResources(),
@@ -157,59 +135,33 @@ func addSidecars(input *Input, postgresql *v1.Postgresql, stunnelSidecarImage st
 			},
 		},
 	}
+	return nil
 }
 
-func getStunnelSidecarResources() *v1.Resources {
-	return &v1.Resources{
-		ResourceRequests: v1.ResourceDescription{
+func getStunnelSidecarResources() *zalandov1.Resources {
+	return &zalandov1.Resources{
+		ResourceRequests: zalandov1.ResourceDescription{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},
-		ResourceLimits: v1.ResourceDescription{
+		ResourceLimits: zalandov1.ResourceDescription{
 			CPU:    "500m",
 			Memory: "1Gi",
 		},
 	}
 }
 
-func getResources(inputResources *kubernetesv1model.ContainerResources) *v1.Resources {
-	return &v1.Resources{
-		ResourceRequests: v1.ResourceDescription{
+func getResources(inputResources *plantoncloudk8sv1model.ContainerResources) *zalandov1.Resources {
+	return &zalandov1.Resources{
+		ResourceRequests: zalandov1.ResourceDescription{
 			CPU:    inputResources.Requests.Cpu,
 			Memory: inputResources.Requests.Memory,
 		},
-		ResourceLimits: v1.ResourceDescription{
+		ResourceLimits: zalandov1.ResourceDescription{
 			CPU:    inputResources.Limits.Cpu,
 			Memory: inputResources.Limits.Memory,
 		},
 	}
-}
-
-func getUsers(clusterConfig *code2cloudv1deploypgcstackk8smodel.PostgresKubernetesConfig) map[string]v1.UserFlags {
-	users := make(map[string]v1.UserFlags, 0)
-	for _, u := range clusterConfig.Users {
-		users[u.Name] = defaultUserFlags
-	}
-	return users
-}
-
-func getDatabases(clusterConfig *code2cloudv1deploypgcstackk8smodel.PostgresKubernetesConfig) map[string]string {
-	databases := make(map[string]string, 0)
-	for _, d := range clusterConfig.Databases {
-		databases[d.Name] = d.Owner.Name
-	}
-	return databases
-}
-
-func getPostgresParameters(defaultParams, inputParams map[string]string) map[string]string {
-	parameters := make(map[string]string, 0)
-	for k, v := range defaultParams {
-		parameters[k] = v
-	}
-	for k, v := range inputParams {
-		parameters[k] = v
-	}
-	return parameters
 }
 
 // GetDatabaseName returns input for zalando operator for name of the database.
