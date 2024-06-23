@@ -5,8 +5,8 @@ import (
 	code2cloudv1deploypgcstackk8smodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/stack/kubernetes/model"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
 	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
-	postgresnamespaceresources "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/namespace"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network"
+	commonsnamespaceresources "github.com/plantoncloud/pulumi-blueprint-commons/pkg/kubernetes/namespace"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -25,7 +25,7 @@ func (resourceStack *ResourceStack) Resources(ctx *pulumi.Context) error {
 	ctx = ctx.WithValue(postgresdbcontextconfig.Key, *ctxConfig)
 
 	// Create the namespace resource
-	ctx, err = postgresnamespaceresources.Resources(ctx)
+	namespace, err := commonsnamespaceresources.Resources(ctx, resourceStack.Input.ProtoReflect())
 	if err != nil {
 		return errors.Wrap(err, "failed to create namespace resource")
 	}
