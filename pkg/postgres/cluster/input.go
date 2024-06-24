@@ -11,8 +11,10 @@ import (
 
 type input struct {
 	WorkspaceDir     string
+	ResourceId       string
 	Metadata         *plantoncommonsapiresourcemodel.ApiResourceMetadata
 	Namespace        *kubernetescorev1.Namespace
+	NamespaceName    string
 	ContainerSpec    *plantoncloudpostgresdbmodel.PostgresKubernetesSpecContainerSpec
 	IngressType      kubernetesworkloadingresstype.KubernetesWorkloadIngressType
 	IsIngressEnabled bool
@@ -29,5 +31,6 @@ func extractInput(ctx *pulumi.Context) *input {
 		IngressType:      ctxConfig.Spec.IngressType,
 		IsIngressEnabled: ctxConfig.Spec.IsIngressEnabled,
 		Labels:           ctxConfig.Spec.Labels,
+		NamespaceName:    ctxConfig.Spec.NamespaceName,
 	}
 }

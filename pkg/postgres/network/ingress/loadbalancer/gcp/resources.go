@@ -4,93 +4,78 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
 	postgrescluster "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
-	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/hostname"
-	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/loadbalancer/common"
+	postgrescontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	postgresloadbalancercommon "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/loadbalancer/common"
 	corev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	pulumikubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type Input struct {
-	AddedNamespace     *pulumikubernetescorev1.Namespace
-	PostgresClusterId  string
-	EnvironmentName    string
-	EndpointDomainName string
-}
-
-func Resources(ctx *pulumi.Context, input *Input) error {
+func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 	// Create a Kubernetes Service of type LoadBalancer
-	if err := addExternal(ctx, input); err != nil {
-		return errors.Wrap(err, "failed to add external load balancer")
-	}
-	if err := addInternal(ctx, input); err != nil {
-		return errors.Wrap(err, "failed to add internal load balancer")
-	}
-	return nil
-}
-
-func addExternal(ctx *pulumi.Context, input *Input) error {
-	hostname := hostname.GetExternalClusterHostname(input.PostgresClusterId, input.EnvironmentName, input.EndpointDomainName)
-	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
-		common.ExternalLoadBalancerServiceName,
-		getLoadBalancerServiceArgs(input, common.ExternalLoadBalancerServiceName, hostname), pulumi.Parent(input.AddedNamespace))
+	externalLoadBalancerService, err := addExternal(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+		return nil, errors.Wrap(err, "failed to add external load balancer")
 	}
-
-	exportIpAddress(ctx, addedKubeService, "postgres-ingress-external-lb-ip")
-	return nil
-}
-
-func addInternal(ctx *pulumi.Context, input *Input) error {
-	hostname := hostname.GetInternalClusterHostname(input.PostgresClusterId, input.EnvironmentName, input.EndpointDomainName)
-	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
-		common.InternalLoadBalancerServiceName,
-		getInternalLoadBalancerServiceArgs(input, hostname), pulumi.Parent(input.AddedNamespace))
+	internalLoadBalancerService, err := addInternal(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+		return nil, errors.Wrap(err, "failed to add internal load balancer")
 	}
 
-	exportIpAddress(ctx, addedKubeService, "postgres-ingress-internal-lb-ip")
-	return nil
+	var ctxConfig = ctx.Value(postgrescontextconfig.Key).(postgrescontextconfig.ContextConfig)
+
+	addLoadBalancerExternalServiceToContext(&ctxConfig, externalLoadBalancerService)
+	addLoadBalancerInternalServiceToContext(&ctxConfig, internalLoadBalancerService)
+	ctx = ctx.WithValue(postgrescontextconfig.Key, ctxConfig)
+
+	return ctx, nil
 }
 
-func exportIpAddress(ctx *pulumi.Context, addedKubeService *pulumikubernetescorev1.Service, outputName string) {
-	// Wait for the LoadBalancer IP to be available and export it
-	externalLoadBalancerIp := addedKubeService.Status.ApplyT(func(status *pulumikubernetescorev1.ServiceStatus) (string, error) {
-		if status.LoadBalancer.Ingress == nil || len(status.LoadBalancer.Ingress) == 0 {
-			return "", errors.New("ingress LoadBalancer not found after service initialization is complete")
-		}
-		ingressIP := status.LoadBalancer.Ingress[0].Ip
-		if ingressIP == nil {
-			return "", errors.New("ingress LoadBalancer does not have an ip after service initialization is complete")
-		}
-		return *ingressIP, nil
-	})
-
-	ctx.Export(outputName, externalLoadBalancerIp)
+func addExternal(ctx *pulumi.Context) (*pulumikubernetescorev1.Service, error) {
+	i := extractInput(ctx)
+	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
+		postgresloadbalancercommon.ExternalLoadBalancerServiceName,
+		getLoadBalancerServiceArgs(i, postgresloadbalancercommon.ExternalLoadBalancerServiceName, i.ExternalEndpoint),
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Parent(i.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+	}
+	return addedKubeService, nil
 }
 
-func getInternalLoadBalancerServiceArgs(input *Input, hostname string) *pulumikubernetescorev1.ServiceArgs {
-	resp := getLoadBalancerServiceArgs(input, common.InternalLoadBalancerServiceName, hostname)
+func addInternal(ctx *pulumi.Context) (*pulumikubernetescorev1.Service, error) {
+	i := extractInput(ctx)
+	addedKubeService, err := pulumikubernetescorev1.NewService(ctx,
+		postgresloadbalancercommon.InternalLoadBalancerServiceName,
+		getInternalLoadBalancerServiceArgs(i, i.InternalEndpoint, i.Namespace),
+		pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "30s", Update: "30s", Delete: "30s"}), pulumi.Parent(i.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create kubernetes service of type load balancer")
+	}
+	return addedKubeService, nil
+}
+
+func getInternalLoadBalancerServiceArgs(i *input, hostname string, namespace *pulumikubernetescorev1.Namespace) *pulumikubernetescorev1.ServiceArgs {
+	resp := getLoadBalancerServiceArgs(i, postgresloadbalancercommon.InternalLoadBalancerServiceName, hostname)
 	resp.Metadata = &metav1.ObjectMetaArgs{
-		Name:      pulumi.String(common.InternalLoadBalancerServiceName),
-		Namespace: input.AddedNamespace.Metadata.Name(),
+		Name:      pulumi.String(postgresloadbalancercommon.InternalLoadBalancerServiceName),
+		Namespace: namespace.Metadata.Name(),
+		Labels:    namespace.Metadata.Labels(),
 		Annotations: pulumi.StringMap{
 			"cloud.google.com/load-balancer-type":       pulumi.String("Internal"),
-			"planton.cloud/endpoint-domain-name":        pulumi.String(input.EndpointDomainName),
+			"planton.cloud/endpoint-domain-name":        pulumi.String(i.EndpointDomainName),
 			"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname),
 		},
 	}
 	return resp
 }
 
-func getLoadBalancerServiceArgs(input *Input, serviceName, hostname string) *pulumikubernetescorev1.ServiceArgs {
+func getLoadBalancerServiceArgs(input *input, serviceName, hostname string) *pulumikubernetescorev1.ServiceArgs {
 	return &pulumikubernetescorev1.ServiceArgs{
 		Metadata: metav1.ObjectMetaArgs{
 			Name:      pulumi.String(serviceName),
-			Namespace: input.AddedNamespace.Metadata.Name(),
+			Namespace: input.Namespace.Metadata.Name(),
 			Annotations: pulumi.StringMap{
 				"planton.cloud/endpoint-domain-name":        pulumi.String(input.EndpointDomainName),
 				"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname),
@@ -114,4 +99,24 @@ func getLoadBalancerServiceArgs(input *Input, serviceName, hostname string) *pul
 			},
 		},
 	}
+}
+
+func addLoadBalancerExternalServiceToContext(existingConfig *postgrescontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &postgrescontextconfig.AddedResources{
+			LoadBalancerExternalService: loadBalancerService,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.LoadBalancerExternalService = loadBalancerService
+}
+
+func addLoadBalancerInternalServiceToContext(existingConfig *postgrescontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+	if existingConfig.Status.AddedResources == nil {
+		existingConfig.Status.AddedResources = &postgrescontextconfig.AddedResources{
+			LoadBalancerInternalService: loadBalancerService,
+		}
+		return
+	}
+	existingConfig.Status.AddedResources.LoadBalancerInternalService = loadBalancerService
 }

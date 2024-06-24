@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-func GetInternalHostname(mongodbClusterId, environmentName, endpointDomainName string) string {
-	return fmt.Sprintf("%s.%s-internal.%s", mongodbClusterId, environmentName, endpointDomainName)
+func GetInternalHostname(postgresKubernetesId, environmentName, endpointDomainName string) string {
+	return fmt.Sprintf("%s.%s-internal.%s", postgresKubernetesId, environmentName, endpointDomainName)
 }
 
-func GetExternalHostname(mongodbClusterId, environmentName, endpointDomainName string) string {
-	return fmt.Sprintf("%s.%s.%s", mongodbClusterId, environmentName, endpointDomainName)
+func GetExternalHostname(postgresKubernetesId, environmentName, endpointDomainName string) string {
+	return fmt.Sprintf("%s.%s.%s", postgresKubernetesId, environmentName, endpointDomainName)
 }
