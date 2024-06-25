@@ -4,9 +4,9 @@ go 1.22
 
 toolchain go1.22.3
 
-replace github.com/plantoncloud/planton-cloud-apis => ../planton-cloud-apis
+//replace github.com/plantoncloud/planton-cloud-apis => ../planton-cloud-apis
 
-replace github.com/plantoncloud/pulumi-blueprint-commons => ../pulumi-blueprint-commons
+//replace github.com/plantoncloud/pulumi-blueprint-commons => ../pulumi-blueprint-commons
 
 //replace github.com/plantoncloud/pulumi-stack-runner-go-sdk => ../pulumi-stack-runner-go-sdk
 
@@ -66,7 +66,7 @@ require (
 	github.com/plantoncloud-inc/go-commons v0.0.431
 	github.com/plantoncloud/environment-pulumi-blueprint v0.0.0-20240310194959-9094df3f0bc2
 	github.com/plantoncloud/kube-cluster-pulumi-blueprint v0.0.0-20240310194535-306b2b154436
-	github.com/plantoncloud/planton-cloud-apis v0.0.188
+	github.com/plantoncloud/planton-cloud-apis v0.0.200
 	github.com/plantoncloud/pulumi-blueprint-commons v0.0.0-20240601085511-e587f645409b
 	github.com/plantoncloud/pulumi-stack-runner-go-sdk v0.0.45
 	k8s.io/api v0.29.0
