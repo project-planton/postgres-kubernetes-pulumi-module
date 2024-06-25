@@ -3,6 +3,7 @@ package outputs
 import (
 	"fmt"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
+	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/output/custom"
 	puluminamekubeoutput "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/provider/kubernetes/output"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
@@ -61,8 +62,8 @@ func GetNamespaceNameOutputName() string {
 }
 
 // getKubePortForwardCommand returns kubectl port-forward command that can be used by developers.
-// ex: "kubectl port-forward -n kubernetes_namespace  service/main-mongodb-cluster 8080:8080"
+// ex: "kubectl port-forward -n kubernetes_namespace  service/main-postgres-kubernetes 8080:8080"
 func getKubePortForwardCommand(namespaceName, kubeServiceName string) string {
 	return fmt.Sprintf("kubectl port-forward -n %s service/%s %d:%d",
-		namespaceName, kubeServiceName, MongoDbPort, MongoDbPort)
+		namespaceName, kubeServiceName, cluster.PostgresContainerPort, cluster.PostgresContainerPort)
 }

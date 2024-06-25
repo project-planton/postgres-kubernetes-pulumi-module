@@ -1,14 +1,9 @@
 package outputs
 
 import (
-	mongodbcontextconfig "github.com/plantoncloud/mongodb-cluster-pulumi-blueprint/pkg/kubernetes/contextconfig"
+	postgrescontextstate "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextstate"
 	pulumicommonsloadbalancerservice "github.com/plantoncloud/pulumi-blueprint-commons/pkg/kubernetes/loadbalancer/service"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-)
-
-const (
-	rootUsername = "root"
-	MongoDbPort  = 27017
 )
 
 type input struct {
@@ -26,7 +21,7 @@ type input struct {
 }
 
 func extractInput(ctx *pulumi.Context) *input {
-	var ctxConfig = ctx.Value(mongodbcontextconfig.Key).(mongodbcontextconfig.ContextConfig)
+	var ctxConfig = ctx.Value(postgrescontextstate.Key).(postgrescontextstate.ContextState)
 	var externalLoadBalancerIpAddress = ""
 	var internalLoadBalancerIpAddress = ""
 
