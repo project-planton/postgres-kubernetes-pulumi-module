@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	postgresblueprintoutputs "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/outputs"
 
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/iac/v1/stackjob/enums/stackjoboperationtype"
 
 	"github.com/pkg/errors"
 	code2cloudv1deploypgk8smodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/model"
 	code2cloudv1deploypgk8sstackmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/stack/model"
+	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/hostname"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/org"
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/stack/output/backend"
 )
@@ -29,11 +31,11 @@ func OutputMapTransformer(stackOutput map[string]interface{}, input *code2cloudv
 		return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatus{}
 	}
 	return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatus{
-		Namespace:               "coming-soon",
-		Service:                 "coming-soon",
-		PortForwardCommand:      "coming-soon",
-		KubeEndpoint:            "coming-soon",
-		ExternalClusterHostname: "coming-soon",
-		InternalClusterHostname: "coming-soon",
+		Namespace:               backend.GetVal(stackOutput, postgresblueprintoutputs.GetNamespaceNameOutputName()),
+		Service:                 backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeServiceNameOutputName()),
+		PortForwardCommand:      backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubePortForwardCommandOutputName()),
+		KubeEndpoint:            backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeEndpointOutputName()),
+		ExternalClusterHostname: backend.GetVal(stackOutput, hostname.GetExternalClusterHostnameOutputName()),
+		InternalClusterHostname: backend.GetVal(stackOutput, hostname.GetInternalClusterHostnameOutputName()),
 	}
 }
