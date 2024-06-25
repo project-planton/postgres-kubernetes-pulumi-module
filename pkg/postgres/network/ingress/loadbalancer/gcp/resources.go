@@ -4,9 +4,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
 	postgrescluster "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
-	postgrescontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	postgrescontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextstate"
 	postgresloadbalancercommon "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/loadbalancer/common"
-	corev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	pulumikubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -23,7 +22,7 @@ func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 		return nil, errors.Wrap(err, "failed to add internal load balancer")
 	}
 
-	var ctxConfig = ctx.Value(postgrescontextconfig.Key).(postgrescontextconfig.ContextConfig)
+	var ctxConfig = ctx.Value(postgrescontextconfig.Key).(postgrescontextconfig.ContextState)
 
 	addLoadBalancerExternalServiceToContext(&ctxConfig, externalLoadBalancerService)
 	addLoadBalancerInternalServiceToContext(&ctxConfig, internalLoadBalancerService)
@@ -81,7 +80,7 @@ func getLoadBalancerServiceArgs(input *input, serviceName, hostname string) *pul
 				"external-dns.alpha.kubernetes.io/hostname": pulumi.String(hostname),
 			},
 		},
-		Spec: &corev1.ServiceSpecArgs{
+		Spec: &pulumikubernetescorev1.ServiceSpecArgs{
 			Type: pulumi.String("LoadBalancer"), // Service type is LoadBalancer
 			Selector: pulumi.StringMap{
 				//postgres-operator generated labels for the postgres pod
@@ -89,8 +88,8 @@ func getLoadBalancerServiceArgs(input *input, serviceName, hostname string) *pul
 				englishword.EnglishWord_team.String():        pulumi.String(postgrescluster.TeamId),
 				"cluster-name":                               pulumi.String(postgrescluster.GetDatabaseName()),
 			},
-			Ports: corev1.ServicePortArray{
-				&corev1.ServicePortArgs{
+			Ports: pulumikubernetescorev1.ServicePortArray{
+				&pulumikubernetescorev1.ServicePortArgs{
 					Name:       pulumi.String(englishword.EnglishWord_postgres.String()),
 					Protocol:   pulumi.String("TCP"),
 					Port:       pulumi.Int(postgrescluster.PostgresContainerPort),
@@ -101,7 +100,7 @@ func getLoadBalancerServiceArgs(input *input, serviceName, hostname string) *pul
 	}
 }
 
-func addLoadBalancerExternalServiceToContext(existingConfig *postgrescontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+func addLoadBalancerExternalServiceToContext(existingConfig *postgrescontextconfig.ContextState, loadBalancerService *pulumikubernetescorev1.Service) {
 	if existingConfig.Status.AddedResources == nil {
 		existingConfig.Status.AddedResources = &postgrescontextconfig.AddedResources{
 			LoadBalancerExternalService: loadBalancerService,
@@ -111,7 +110,7 @@ func addLoadBalancerExternalServiceToContext(existingConfig *postgrescontextconf
 	existingConfig.Status.AddedResources.LoadBalancerExternalService = loadBalancerService
 }
 
-func addLoadBalancerInternalServiceToContext(existingConfig *postgrescontextconfig.ContextConfig, loadBalancerService *pulumikubernetescorev1.Service) {
+func addLoadBalancerInternalServiceToContext(existingConfig *postgrescontextconfig.ContextState, loadBalancerService *pulumikubernetescorev1.Service) {
 	if existingConfig.Status.AddedResources == nil {
 		existingConfig.Status.AddedResources = &postgrescontextconfig.AddedResources{
 			LoadBalancerInternalService: loadBalancerService,

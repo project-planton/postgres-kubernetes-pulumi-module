@@ -65,8 +65,8 @@ require (
 require (
 	github.com/plantoncloud-inc/go-commons v0.0.431
 	github.com/plantoncloud/environment-pulumi-blueprint v0.0.0-20240310194959-9094df3f0bc2
-	github.com/plantoncloud/jenkins-server-pulumi-blueprint v0.0.0-20240617130944-2975751b2af5
 	github.com/plantoncloud/kube-cluster-pulumi-blueprint v0.0.0-20240310194535-306b2b154436
+	github.com/plantoncloud/mongodb-cluster-pulumi-blueprint v0.0.0-20240618133216-2758b0da6cd0
 	github.com/plantoncloud/planton-cloud-apis v0.0.188
 	github.com/plantoncloud/pulumi-blueprint-commons v0.0.0-20240601085511-e587f645409b
 	github.com/plantoncloud/pulumi-stack-runner-go-sdk v0.0.45

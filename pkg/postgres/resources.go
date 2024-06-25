@@ -4,9 +4,10 @@ import (
 	"github.com/pkg/errors"
 	code2cloudv1deploypgcstackk8smodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/stack/model"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
-	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextstate"
 	postgreskubernetesnamespace "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/namespace"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network"
+	postgresblueprintoutputs "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/outputs"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -34,14 +35,15 @@ func (resourceStack *ResourceStack) Resources(ctx *pulumi.Context) error {
 		return errors.Wrap(err, "failed to add cluster resources")
 	}
 
-	if err := network.Resources(ctx, &network.Input{
-		WorkspaceDir:       resourceStack.WorkspaceDir,
-		NamespaceName:      namespaceName,
-		AddedNamespace:     addedNamespace,
-		StackResourceInput: resourceStack.Input.ResourceInput,
-		Labels:             resourceStack.KubernetesLabels,
-	}); err != nil {
+	ctx, err = network.Resources(ctx)
+	if err != nil {
 		return errors.Wrap(err, "failed to add network resources")
 	}
+
+	err = postgresblueprintoutputs.Export(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to export postgres kubernetes outputs")
+	}
+
 	return nil
 }

@@ -2,7 +2,7 @@ package namespace
 
 import (
 	"github.com/pkg/errors"
-	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextstate"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -14,7 +14,7 @@ func Resources(ctx *pulumi.Context) (*pulumi.Context, error) {
 		return nil, errors.Wrap(err, "failed to add namespace")
 	}
 
-	var ctxConfig = ctx.Value(postgresdbcontextconfig.Key).(postgresdbcontextconfig.ContextConfig)
+	var ctxConfig = ctx.Value(postgresdbcontextconfig.Key).(postgresdbcontextconfig.ContextState)
 
 	addNamespaceToContext(&ctxConfig, namespace)
 	ctx = ctx.WithValue(postgresdbcontextconfig.Key, ctxConfig)
@@ -26,7 +26,7 @@ func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
 
 	ns, err := kubernetescorev1.NewNamespace(ctx, i.NamespaceName, &kubernetescorev1.NamespaceArgs{
 		ApiVersion: pulumi.String("v1"),
-		Kind:       pulumi.String("Namespace"),
+		Kind:       pulumi.String("namespace"),
 		Metadata: metav1.ObjectMetaPtrInput(&metav1.ObjectMetaArgs{
 			Name:   pulumi.String(i.NamespaceName),
 			Labels: pulumi.ToStringMap(i.Labels),
@@ -39,7 +39,7 @@ func addNamespace(ctx *pulumi.Context) (*kubernetescorev1.Namespace, error) {
 	return ns, nil
 }
 
-func addNamespaceToContext(existingConfig *postgresdbcontextconfig.ContextConfig, namespace *kubernetescorev1.Namespace) {
+func addNamespaceToContext(existingConfig *postgresdbcontextconfig.ContextState, namespace *kubernetescorev1.Namespace) {
 	if existingConfig.Status.AddedResources == nil {
 		existingConfig.Status.AddedResources = &postgresdbcontextconfig.AddedResources{
 			Namespace: namespace,

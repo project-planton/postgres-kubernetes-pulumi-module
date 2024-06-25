@@ -19,39 +19,19 @@ type Input struct {
 	Namespace *pulk8scv1.Namespace
 }
 
-func Resources(ctx *pulumi.Context, input *Input) error {
-	if _, err := addService(ctx, input); err != nil {
+func Resources(ctx *pulumi.Context) error {
+	if _, err := addService(ctx); err != nil {
 		return errors.Wrap(err, "failed to add stunnel service")
 	}
 	return nil
 }
 
-/*
-apiVersion: v1
-kind: Service
-metadata:
-
-	name: stunnel
-	namespace: planton-pcs-dev-postgres-apr
-
-spec:
-
-	type: ClusterIP
-	ports:
-	- name: postgresql
-	  port: 5432
-	  protocol: TCP
-	  targetPort: 15432
-	selector:
-	  application: spilo
-	  cluster-name: pcs-apr
-	  team: pcs
-*/
-func addService(ctx *pulumi.Context, input *Input) (*corev1.Service, error) {
+func addService(ctx *pulumi.Context) (*corev1.Service, error) {
+	i := extractInput(ctx)
 	svc, err := corev1.NewService(ctx, StunnelServiceName, &corev1.ServiceArgs{
 		Metadata: metav1.ObjectMetaArgs{
 			Name:      pulumi.String(StunnelServiceName),
-			Namespace: input.Namespace.Metadata.Name(),
+			Namespace: i.Namespace.Metadata.Name(),
 		},
 		Spec: &corev1.ServiceSpecArgs{
 			Type: pulumi.String("ClusterIP"),
@@ -70,7 +50,7 @@ func addService(ctx *pulumi.Context, input *Input) (*corev1.Service, error) {
 				},
 			},
 		},
-	}, pulumi.Parent(input.Namespace))
+	}, pulumi.Parent(i.Namespace))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to add service")
 	}

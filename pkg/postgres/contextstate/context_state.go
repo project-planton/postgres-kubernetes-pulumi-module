@@ -1,4 +1,4 @@
-package contextconfig
+package contextstate
 
 import (
 	code2cloudenvironmentmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/environment/model"
@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	Key = "ctx-config"
+	Key = "ctx-state"
 )
 
-type ContextConfig struct {
+type ContextState struct {
 	Spec   *Spec
 	Status *Status
 }
@@ -35,6 +35,7 @@ type Spec struct {
 	ExternalHostname   string
 	KubeServiceName    string
 	KubeLocalEndpoint  string
+	CertSecretName     string
 }
 
 type Status struct {

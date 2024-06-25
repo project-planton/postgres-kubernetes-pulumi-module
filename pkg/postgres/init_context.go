@@ -4,14 +4,15 @@ import (
 	"github.com/pkg/errors"
 	environmentblueprinthostnames "github.com/plantoncloud/environment-pulumi-blueprint/pkg/gcpgke/endpointdomains/hostnames"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubecluster/enums/kubernetesworkloadingresstype"
-	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextconfig"
+	postgresdbcontextconfig "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/contextstate"
+	postgressingresscert "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/istio/cert"
 	postgresdbnetutilshostname "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/netutils/hostname"
 	postgresdbnetutilsservice "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/netutils/service"
 	plantoncloudpulumisdkkubernetes "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/automation/provider/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbcontextconfig.ContextConfig, error) {
+func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbcontextconfig.ContextState, error) {
 
 	kubernetesProvider, err := plantoncloudpulumisdkkubernetes.GetWithStackCredentials(ctx, resourceStack.Input.CredentialsInput)
 	if err != nil {
@@ -32,6 +33,7 @@ func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbc
 	var ingressType = kubernetesworkloadingresstype.KubernetesWorkloadIngressType_unspecified
 	var internalHostname = ""
 	var externalHostname = ""
+	var certSecretName = ""
 
 	if isIngressEnabled {
 		endpointDomainName = resourceStack.Input.ResourceInput.Spec.Ingress.EndpointDomainName
@@ -40,9 +42,10 @@ func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbc
 
 		internalHostname = postgresdbnetutilshostname.GetInternalHostname(resourceId, environmentInfo.EnvironmentName, endpointDomainName)
 		externalHostname = postgresdbnetutilshostname.GetExternalHostname(resourceId, environmentInfo.EnvironmentName, endpointDomainName)
+		certSecretName = postgressingresscert.GetCertSecretName(resourceName)
 	}
 
-	return &postgresdbcontextconfig.ContextConfig{
+	return &postgresdbcontextconfig.ContextState{
 		Spec: &postgresdbcontextconfig.Spec{
 			KubeProvider:       kubernetesProvider,
 			ResourceId:         resourceId,
@@ -60,6 +63,7 @@ func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbc
 			ExternalHostname:   externalHostname,
 			KubeServiceName:    postgresdbnetutilsservice.GetKubeServiceName(resourceName),
 			KubeLocalEndpoint:  postgresdbnetutilsservice.GetKubeServiceNameFqdn(resourceName, resourceId),
+			CertSecretName:     certSecretName,
 		},
 		Status: &postgresdbcontextconfig.Status{},
 	}, nil

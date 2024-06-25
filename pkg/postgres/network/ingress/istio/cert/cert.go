@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plantoncloud-inc/go-commons/kubernetes/manifest"
 	"github.com/plantoncloud/kube-cluster-pulumi-blueprint/pkg/gcp/container/addon/certmanager/clusterissuer"
-	pulk8scv1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	pulumik8syaml "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/yaml"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 
@@ -21,62 +20,29 @@ const (
 	Name = "stunnel"
 )
 
-type Input struct {
-	Namespace     *pulk8scv1.Namespace
-	Labels        map[string]string
-	WorkspaceDir  string
-	NamespaceName string
-	Hostnames     []string
-}
-
-func Resources(ctx *pulumi.Context, input *Input) error {
-	if err := addCert(ctx, input); err != nil {
+func Resources(ctx *pulumi.Context) error {
+	if err := addCert(ctx); err != nil {
 		return errors.Wrap(err, "failed to add cert")
 	}
 	return nil
 }
 
-func addCert(ctx *pulumi.Context, input *Input) error {
-	certObj := buildCertObject(Name, input.NamespaceName, input.Hostnames, input.Labels)
+func addCert(ctx *pulumi.Context) error {
+	i := extractInput(ctx)
+	certObj := buildCertObject(Name, i.NamespaceName, i.Hostnames, i.Labels, i.CertSecretName)
 	resourceName := fmt.Sprintf("cert-%s", certObj.Name)
-	manifestPath := filepath.Join(input.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
+	manifestPath := filepath.Join(i.WorkspaceDir, fmt.Sprintf("%s.yaml", resourceName))
 	if err := manifest.Create(manifestPath, certObj); err != nil {
 		return errors.Wrapf(err, "failed to create %s manifest file", manifestPath)
 	}
-	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{File: manifestPath}, pulumi.Parent(input.Namespace))
+	_, err := pulumik8syaml.NewConfigFile(ctx, resourceName, &pulumik8syaml.ConfigFileArgs{File: manifestPath}, pulumi.Parent(i.Namespace))
 	if err != nil {
 		return errors.Wrap(err, "failed to add cert manifest")
 	}
 	return nil
 }
 
-/*
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-
-	name: stunnel
-	namespace: planton-pcs-dev-postgres-apr
-
-spec:
-
-	additionalOutputFormats:
-	- type: CombinedPEM
-	secretName: cert-stunnel
-	usages:
-	  - server auth
-	# At least one of a DNS Name, URI, or IP address is required.
-	dnsNames:
-	  - <postgres-cluster-id>.dev.planton.cloud
-	privateKey:
-	  algorithm: ECDSA
-	  size: 256
-	issuerRef:
-	  name: self-signed
-	  kind: ClusterIssuer
-	  group: cert-manager.io
-*/
-func buildCertObject(certName string, namespaceName string, hostnames []string, labels map[string]string) *v1.Certificate {
+func buildCertObject(certName string, namespaceName string, hostnames []string, labels map[string]string, certSecretName string) *v1.Certificate {
 	return &v1.Certificate{
 		TypeMeta: k8sapimachineryv1.TypeMeta{
 			APIVersion: "cert-manager.io/v1",
@@ -93,7 +59,7 @@ func buildCertObject(certName string, namespaceName string, hostnames []string, 
 					Type: "CombinedPEM",
 				},
 			},
-			SecretName: GetCertSecretName(certName),
+			SecretName: certSecretName,
 			DNSNames:   hostnames,
 			PrivateKey: &v1.CertificatePrivateKey{
 				Algorithm: "ECDSA",
