@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/english/enums/englishword"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/cluster"
-	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/output/custom"
-	puluminamekubeoutput "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/provider/kubernetes/output"
+	"github.com/plantoncloud/pulumi-blueprint-golang-commons/pkg/kubernetes/pulumikubernetesprovider"
+	"github.com/plantoncloud/pulumi-blueprint-golang-commons/pkg/pulumi/pulumicustomoutput"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -30,35 +30,36 @@ func Export(ctx *pulumi.Context) error {
 }
 
 func GetExternalClusterHostnameOutputName() string {
-	return custom.Name("postgres-cluster-external-hostname")
+	return pulumicustomoutput.Name("postgres-cluster-external-hostname")
 }
 
 func GetInternalClusterHostnameOutputName() string {
-	return custom.Name("postgres-cluster-internal-hostname")
+	return pulumicustomoutput.Name("postgres-cluster-internal-hostname")
 }
 
 func GetKubeServiceNameOutputName() string {
-	return custom.Name("postgres-cluster-kubernetes-service-name")
+	return pulumicustomoutput.Name("postgres-cluster-kubernetes-service-name")
 }
 
 func GetKubeEndpointOutputName() string {
-	return custom.Name("postgres-cluster-kubernetes-endpoint")
+	return pulumicustomoutput.Name("postgres-cluster-kubernetes-endpoint")
 }
 
 func GetKubePortForwardCommandOutputName() string {
-	return custom.Name("postgres-cluster-kube-port-forward-command")
+	return pulumicustomoutput.Name("postgres-cluster-kube-port-forward-command")
 }
 
 func GetExternalLoadBalancerIp() string {
-	return custom.Name("postgres-ingress-external-lb-ip")
+	return pulumicustomoutput.Name("postgres-ingress-external-lb-ip")
 }
 
 func GetInternalLoadBalancerIp() string {
-	return custom.Name("postgres-ingress-internal-lb-ip")
+	return pulumicustomoutput.Name("postgres-ingress-internal-lb-ip")
 }
 
 func GetNamespaceNameOutputName() string {
-	return puluminamekubeoutput.Name(kubernetescorev1.Namespace{}, englishword.EnglishWord_namespace.String())
+	return pulumikubernetesprovider.PulumiOutputName(kubernetescorev1.Namespace{},
+		englishword.EnglishWord_namespace.String())
 }
 
 // getKubePortForwardCommand returns kubectl port-forward command that can be used by developers.

@@ -2,9 +2,9 @@ package hostname
 
 import (
 	"fmt"
+	"github.com/plantoncloud/pulumi-blueprint-golang-commons/pkg/pulumi/pulumicustomoutput"
 
 	code2cloudv1deploypgcmodel "github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/postgreskubernetes/model"
-	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/name/output/custom"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -40,13 +40,13 @@ func GetKubeEndpoint(productId, postgresClusterName, kubernetesNamespaceName str
 }
 
 func GetExternalClusterHostnameOutputName() string {
-	return custom.Name("external-cluster-hostname")
+	return pulumicustomoutput.Name("external-cluster-hostname")
 }
 
 func GetInternalClusterHostnameOutputName() string {
-	return custom.Name("internal-cluster-hostname")
+	return pulumicustomoutput.Name("internal-cluster-hostname")
 }
 
 func GetKubeEndpointOutputName() string {
-	return custom.Name("kube-endpoint")
+	return pulumicustomoutput.Name("kube-endpoint")
 }

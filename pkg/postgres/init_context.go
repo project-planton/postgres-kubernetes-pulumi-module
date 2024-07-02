@@ -8,13 +8,13 @@ import (
 	postgressingresscert "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/istio/cert"
 	postgresdbnetutilshostname "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/netutils/hostname"
 	postgresdbnetutilsservice "github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/postgres/network/ingress/netutils/service"
-	plantoncloudpulumisdkkubernetes "github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/automation/provider/kubernetes"
+	"github.com/plantoncloud/pulumi-blueprint-golang-commons/pkg/kubernetes/pulumikubernetesprovider"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 func loadConfig(ctx *pulumi.Context, resourceStack *ResourceStack) (*postgresdbcontextconfig.ContextState, error) {
 
-	kubernetesProvider, err := plantoncloudpulumisdkkubernetes.GetWithStackCredentials(ctx, resourceStack.Input.CredentialsInput)
+	kubernetesProvider, err := pulumikubernetesprovider.GetWithStackCredentials(ctx, resourceStack.Input.CredentialsInput)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to setup kubernetes provider")
 	}
