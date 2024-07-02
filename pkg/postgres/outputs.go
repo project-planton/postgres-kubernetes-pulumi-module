@@ -14,7 +14,7 @@ import (
 	"github.com/plantoncloud/pulumi-stack-runner-go-sdk/pkg/stack/output/backend"
 )
 
-func Outputs(ctx context.Context, input *code2cloudv1deploypgk8sstackmodel.PostgresKubernetesStackInput) (*code2cloudv1deploypgk8smodel.PostgresKubernetesStatus, error) {
+func Outputs(ctx context.Context, input *code2cloudv1deploypgk8sstackmodel.PostgresKubernetesStackInput) (*code2cloudv1deploypgk8smodel.PostgresKubernetesStatusStackOutputs, error) {
 	pulumiOrgName, err := org.GetOrgName()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get pulumi org name")
@@ -26,16 +26,16 @@ func Outputs(ctx context.Context, input *code2cloudv1deploypgk8sstackmodel.Postg
 	return OutputMapTransformer(stackOutput, input), nil
 }
 
-func OutputMapTransformer(stackOutput map[string]interface{}, input *code2cloudv1deploypgk8sstackmodel.PostgresKubernetesStackInput) *code2cloudv1deploypgk8smodel.PostgresKubernetesStatus {
+func OutputMapTransformer(stackOutput map[string]interface{}, input *code2cloudv1deploypgk8sstackmodel.PostgresKubernetesStackInput) *code2cloudv1deploypgk8smodel.PostgresKubernetesStatusStackOutputs {
 	if input.StackJob.Spec.OperationType != stackjoboperationtype.StackJobOperationType_apply || stackOutput == nil {
-		return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatus{}
+		return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatusStackOutputs{}
 	}
-	return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatus{
-		Namespace:               backend.GetVal(stackOutput, postgresblueprintoutputs.GetNamespaceNameOutputName()),
-		Service:                 backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeServiceNameOutputName()),
-		PortForwardCommand:      backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubePortForwardCommandOutputName()),
-		KubeEndpoint:            backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeEndpointOutputName()),
-		ExternalClusterHostname: backend.GetVal(stackOutput, hostname.GetExternalClusterHostnameOutputName()),
-		InternalClusterHostname: backend.GetVal(stackOutput, hostname.GetInternalClusterHostnameOutputName()),
+	return &code2cloudv1deploypgk8smodel.PostgresKubernetesStatusStackOutputs{
+		Namespace:          backend.GetVal(stackOutput, postgresblueprintoutputs.GetNamespaceNameOutputName()),
+		Service:            backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeServiceNameOutputName()),
+		PortForwardCommand: backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubePortForwardCommandOutputName()),
+		KubeEndpoint:       backend.GetVal(stackOutput, postgresblueprintoutputs.GetKubeEndpointOutputName()),
+		ExternalHostname:   backend.GetVal(stackOutput, hostname.GetExternalClusterHostnameOutputName()),
+		InternalHostname:   backend.GetVal(stackOutput, hostname.GetInternalClusterHostnameOutputName()),
 	}
 }
