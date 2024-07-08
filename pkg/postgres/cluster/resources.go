@@ -51,7 +51,7 @@ func addPostgresKubernetes(ctx *pulumi.Context) error {
 func buildPostgresKubernetesObject(i *input) *zalandov1.Postgresql {
 	postgresql := &zalandov1.Postgresql{
 		TypeMeta: k8sapimachineryv1.TypeMeta{
-			APIVersion: "acid.zalan.do/zalandov1",
+			APIVersion: "acid.zalan.do/v1",
 			Kind:       "postgresql",
 		},
 		ObjectMeta: k8sapimachineryv1.ObjectMeta{
