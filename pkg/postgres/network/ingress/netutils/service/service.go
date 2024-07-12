@@ -6,7 +6,7 @@ import (
 )
 
 func GetKubeServiceNameFqdn(postgresKubernetesName, namespace string) string {
-	return fmt.Sprintf("%s.%s.%s", GetKubeServiceName(postgresKubernetesName), namespace, dns.DefaultDomain)
+	return fmt.Sprintf("%s.%s.%s", "db-server", namespace, dns.DefaultDomain)
 }
 
 func GetKubeServiceName(postgresKubernetesName string) string {
