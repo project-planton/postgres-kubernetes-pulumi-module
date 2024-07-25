@@ -2,19 +2,11 @@ module github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint
 
 go 1.22
 
-toolchain go1.22.3
+replace github.com/plantoncloud/planton-cloud-apis => ../../plantoncloud/planton-cloud-apis
 
-//replace github.com/plantoncloud/planton-cloud-apis => ../planton-cloud-apis
+replace github.com/plantoncloud/stack-job-runner-golang-sdk => ../../plantoncloud/stack-job-runner-golang-sdk
 
-//replace github.com/plantoncloud/pulumi-blueprint-commons => ../pulumi-blueprint-commons
-
-//replace github.com/plantoncloud/pulumi-stack-runner-go-sdk => ../pulumi-stack-runner-go-sdk
-
-//replace github.com/plantoncloud-inc/go-commons => ../../plantoncloud-inc/go-commons
-
-//replace github.com/plantoncloud/kube-cluster-pulumi-blueprint => ../kube-cluster-pulumi-blueprint
-
-//replace github.com/plantoncloud/environment-pulumi-blueprint => ../environment-pulumi-blueprint
+replace github.com/plantoncloud/pulumi-module-golang-commons => ../../plantoncloud/pulumi-module-golang-commons
 
 //these replacements are required in order to use external-secrets apis https://github.com/external-secrets/external-secrets/blob/main/go.mod
 replace (
