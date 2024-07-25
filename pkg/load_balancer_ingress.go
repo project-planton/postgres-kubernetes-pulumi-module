@@ -2,16 +2,14 @@ package pkg
 
 import (
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint/pkg/locals"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	kubernetesmetav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func (s *ResourceStack) loadBalancerIngress(ctx *pulumi.Context,
+func loadBalancerIngress(ctx *pulumi.Context,
 	createdNamespace *kubernetescorev1.Namespace) error {
-
-	redisKubernetes := s.Input.ApiResource
-
 	_, err := kubernetescorev1.NewService(ctx,
 		"ingress-external-lb",
 		&kubernetescorev1.ServiceArgs{
@@ -20,10 +18,10 @@ func (s *ResourceStack) loadBalancerIngress(ctx *pulumi.Context,
 				Namespace: createdNamespace.Metadata.Name(),
 				Labels:    createdNamespace.Metadata.Labels(),
 				Annotations: pulumi.StringMap{
-					"planton.cloud/endpoint-domain-name": pulumi.String(redisKubernetes.Spec.Ingress.EndpointDomainName),
-					"external-dns.alpha.kubernetes.io/hostname": pulumi.Sprintf("%s.%s",
-						redisKubernetes.Metadata.Id,
-						redisKubernetes.Spec.Ingress.EndpointDomainName)}},
+					"planton.cloud/endpoint-domain-name":        pulumi.String(locals.PostgresKubernetes.Spec.Ingress.EndpointDomainName),
+					"external-dns.alpha.kubernetes.io/hostname": pulumi.String(locals.IngressExternalHostname),
+				},
+			},
 			Spec: &kubernetescorev1.ServiceSpecArgs{
 				Type: pulumi.String("LoadBalancer"), // Service type is LoadBalancer
 				Ports: kubernetescorev1.ServicePortArray{
@@ -35,11 +33,7 @@ func (s *ResourceStack) loadBalancerIngress(ctx *pulumi.Context,
 						TargetPort: pulumi.String("redis"),
 					},
 				},
-				Selector: pulumi.StringMap{
-					"app.kubernetes.io/component": pulumi.String("master"),
-					"app.kubernetes.io/instance":  pulumi.String(redisKubernetes.Metadata.Id),
-					"app.kubernetes.io/name":      pulumi.String("redis"),
-				},
+				Selector: pulumi.ToStringMap(locals.PostgresPodSectorLabels),
 			},
 		}, pulumi.Parent(createdNamespace))
 	if err != nil {
@@ -54,11 +48,9 @@ func (s *ResourceStack) loadBalancerIngress(ctx *pulumi.Context,
 				Namespace: createdNamespace.Metadata.Name(),
 				Labels:    createdNamespace.Metadata.Labels(),
 				Annotations: pulumi.StringMap{
-					"cloud.google.com/load-balancer-type": pulumi.String("Internal"),
-					"planton.cloud/endpoint-domain-name":  pulumi.String(redisKubernetes.Spec.Ingress.EndpointDomainName),
-					"external-dns.alpha.kubernetes.io/hostname": pulumi.Sprintf("%s-internal.%s",
-						redisKubernetes.Metadata.Id,
-						redisKubernetes.Spec.Ingress.EndpointDomainName),
+					"cloud.google.com/load-balancer-type":       pulumi.String("Internal"),
+					"planton.cloud/endpoint-domain-name":        pulumi.String(locals.PostgresKubernetes.Spec.Ingress.EndpointDomainName),
+					"external-dns.alpha.kubernetes.io/hostname": pulumi.String(locals.IngressInternalHostname),
 				},
 			},
 			Spec: &kubernetescorev1.ServiceSpecArgs{
@@ -72,11 +64,7 @@ func (s *ResourceStack) loadBalancerIngress(ctx *pulumi.Context,
 						TargetPort: pulumi.String("redis"),
 					},
 				},
-				Selector: pulumi.StringMap{
-					"app.kubernetes.io/component": pulumi.String("master"),
-					"app.kubernetes.io/instance":  pulumi.String(redisKubernetes.Metadata.Id),
-					"app.kubernetes.io/name":      pulumi.String("redis"),
-				},
+				Selector: pulumi.ToStringMap(locals.PostgresPodSectorLabels),
 			},
 		}, pulumi.Parent(createdNamespace))
 	if err != nil {
