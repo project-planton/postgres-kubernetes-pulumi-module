@@ -1,4 +1,4 @@
-module github.com/plantoncloud/postgres-kubernetes-pulumi-blueprint
+module github.com/plantoncloud/postgres-kubernetes-pulumi-module
 
 go 1.22
 
