@@ -1,7 +1,7 @@
 package outputs
 
 import (
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/rediskubernetes/model"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes/model"
 	"github.com/plantoncloud/stack-job-runner-golang-sdk/pkg/automationapi/autoapistackoutput"
 	"github.com/pulumi/pulumi/sdk/v3/go/auto"
 )
@@ -16,8 +16,8 @@ const (
 )
 
 func PulumiOutputsToStackOutputsConverter(pulumiOutputs auto.OutputMap,
-	input *model.RedisKubernetesStackInput) *model.RedisKubernetesStackOutputs {
-	return &model.RedisKubernetesStackOutputs{
+	input *model.PostgresKubernetesStackInput) *model.PostgresKubernetesStackOutputs {
+	return &model.PostgresKubernetesStackOutputs{
 		Namespace:          autoapistackoutput.GetVal(pulumiOutputs, Namespace),
 		Service:            autoapistackoutput.GetVal(pulumiOutputs, Service),
 		PortForwardCommand: autoapistackoutput.GetVal(pulumiOutputs, KubePortForwardCommand),
