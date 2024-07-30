@@ -15,7 +15,7 @@ const (
 	IngressInternalHostname = "ingress-internal-hostname"
 )
 
-func PulumiOutputToStackOutputsConverter(pulumiOutputs auto.OutputMap,
+func PulumiOutputsToStackOutputsConverter(pulumiOutputs auto.OutputMap,
 	input *model.RedisKubernetesStackInput) *model.RedisKubernetesStackOutputs {
 	return &model.RedisKubernetesStackOutputs{
 		Namespace:          autoapistackoutput.GetVal(pulumiOutputs, Namespace),
