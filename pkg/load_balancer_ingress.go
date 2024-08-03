@@ -17,19 +17,17 @@ func loadBalancerIngress(ctx *pulumi.Context, locals *Locals,
 				Namespace: createdNamespace.Metadata.Name(),
 				Labels:    createdNamespace.Metadata.Labels(),
 				Annotations: pulumi.StringMap{
-					"planton.cloud/endpoint-domain-name":        pulumi.String(locals.PostgresKubernetes.Spec.Ingress.EndpointDomainName),
 					"external-dns.alpha.kubernetes.io/hostname": pulumi.String(locals.IngressExternalHostname),
 				},
 			},
 			Spec: &kubernetescorev1.ServiceSpecArgs{
-				Type: pulumi.String("LoadBalancer"), // Service type is LoadBalancer
+				Type: pulumi.String("LoadBalancer"),
 				Ports: kubernetescorev1.ServicePortArray{
 					&kubernetescorev1.ServicePortArgs{
-						Name:     pulumi.String("tcp-redis"),
-						Port:     pulumi.Int(6379),
-						Protocol: pulumi.String("TCP"),
-						// This assumes your Redis pod has a port named 'redis'
-						TargetPort: pulumi.String("redis"),
+						Name:       pulumi.String("postgres"),
+						Protocol:   pulumi.String("TCP"),
+						Port:       pulumi.Int(5432),
+						TargetPort: pulumi.Int(5432),
 					},
 				},
 				Selector: pulumi.ToStringMap(locals.PostgresPodSectorLabels),
@@ -48,19 +46,17 @@ func loadBalancerIngress(ctx *pulumi.Context, locals *Locals,
 				Labels:    createdNamespace.Metadata.Labels(),
 				Annotations: pulumi.StringMap{
 					"cloud.google.com/load-balancer-type":       pulumi.String("Internal"),
-					"planton.cloud/endpoint-domain-name":        pulumi.String(locals.PostgresKubernetes.Spec.Ingress.EndpointDomainName),
 					"external-dns.alpha.kubernetes.io/hostname": pulumi.String(locals.IngressInternalHostname),
 				},
 			},
 			Spec: &kubernetescorev1.ServiceSpecArgs{
-				Type: pulumi.String("LoadBalancer"), // Service type is LoadBalancer
+				Type: pulumi.String("LoadBalancer"),
 				Ports: kubernetescorev1.ServicePortArray{
 					&kubernetescorev1.ServicePortArgs{
-						Name:     pulumi.String("tcp-redis"),
-						Port:     pulumi.Int(6379),
-						Protocol: pulumi.String("TCP"),
-						// This assumes your Redis pod has a port named 'redis'
-						TargetPort: pulumi.String("redis"),
+						Name:       pulumi.String("postgres"),
+						Protocol:   pulumi.String("TCP"),
+						Port:       pulumi.Int(5432),
+						TargetPort: pulumi.Int(5432),
 					},
 				},
 				Selector: pulumi.ToStringMap(locals.PostgresPodSectorLabels),

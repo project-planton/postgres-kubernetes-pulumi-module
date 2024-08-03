@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes/model"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-module/pkg/outputs"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -29,9 +30,8 @@ func initializeLocals(ctx *pulumi.Context, stackInput *model.PostgresKubernetesS
 	locals.Namespace = postgresKubernetes.Metadata.Id
 
 	locals.PostgresPodSectorLabels = map[string]string{
-		"app.kubernetes.io/component": "master",
-		"app.kubernetes.io/instance":  postgresKubernetes.Metadata.Id,
-		"app.kubernetes.io/name":      "postgres",
+		"planton.cloud/resource-kind": apiresourcekind.ApiResourceKind_postgres_kubernetes.String(),
+		"planton.cloud/resource-id":   postgresKubernetes.Metadata.Id,
 	}
 
 	locals.KubeServiceName = fmt.Sprintf("%s-master", postgresKubernetes.Metadata.Name)
