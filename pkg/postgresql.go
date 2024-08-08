@@ -30,6 +30,9 @@ func postgresql(ctx *pulumi.Context, locals *Locals,
 				}),
 				Postgresql: zalandov1.PostgresqlSpecPostgresqlArgs{
 					Version: pulumi.String(vars.PostgresVersion),
+					Parameters: pulumi.StringMap{
+						"max_connections": pulumi.String("200"),
+					},
 				},
 				Resources: zalandov1.PostgresqlSpecResourcesArgs{
 					Limits: zalandov1.PostgresqlSpecResourcesLimitsArgs{
