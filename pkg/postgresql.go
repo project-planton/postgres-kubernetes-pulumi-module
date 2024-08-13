@@ -49,7 +49,7 @@ func postgresql(ctx *pulumi.Context, locals *Locals,
 					Size: pulumi.String(locals.PostgresKubernetes.Spec.Container.DiskSize),
 				},
 			},
-		})
+		}, pulumi.Parent(createdNamespace))
 	if err != nil {
 		return errors.Wrap(err, "failed to create postgresql")
 	}
