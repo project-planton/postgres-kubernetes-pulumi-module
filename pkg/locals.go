@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes/model"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-module/pkg/outputs"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -15,11 +15,11 @@ type Locals struct {
 	KubeServiceFqdn         string
 	KubeServiceName         string
 	Namespace               string
-	PostgresKubernetes      *model.PostgresKubernetes
+	PostgresKubernetes      *postgreskubernetes.PostgresKubernetes
 	PostgresPodSectorLabels map[string]string
 }
 
-func initializeLocals(ctx *pulumi.Context, stackInput *model.PostgresKubernetesStackInput) *Locals {
+func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.PostgresKubernetesStackInput) *Locals {
 	locals := &Locals{}
 	//assign value for the local variable to make it available across the module.
 	locals.PostgresKubernetes = stackInput.ApiResource

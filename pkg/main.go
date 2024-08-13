@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"github.com/pkg/errors"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes/model"
+	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/pulumikubernetesprovider"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	metav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
@@ -10,7 +10,7 @@ import (
 )
 
 type ResourceStack struct {
-	Input  *model.PostgresKubernetesStackInput
+	Input  *postgreskubernetes.PostgresKubernetesStackInput
 	Labels map[string]string
 }
 
