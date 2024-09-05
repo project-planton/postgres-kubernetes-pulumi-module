@@ -29,6 +29,8 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.Postgr
 	//decide on the namespace
 	locals.Namespace = postgresKubernetes.Metadata.Id
 
+	ctx.Export(outputs.Namespace, pulumi.String(locals.Namespace))
+
 	locals.PostgresPodSectorLabels = map[string]string{
 		"planton.cloud/resource-kind": apiresourcekind.ApiResourceKind_postgres_kubernetes.String(),
 		"planton.cloud/resource-id":   postgresKubernetes.Metadata.Id,
