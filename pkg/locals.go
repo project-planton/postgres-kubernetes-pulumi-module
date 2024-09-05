@@ -36,6 +36,11 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.Postgr
 		"planton.cloud/resource-id":   postgresKubernetes.Metadata.Id,
 	}
 
+	ctx.Export(outputs.PostgresUserCredentialsSecretName, pulumi.Sprintf("postgres.db-%s.credentials.postgresql.acid.zalan.do",
+		postgresKubernetes.Metadata.Id))
+	ctx.Export(outputs.PostgresUsernameSecretKey, pulumi.String("username"))
+	ctx.Export(outputs.PostgresPasswordSecretKey, pulumi.String("password"))
+
 	locals.KubeServiceName = fmt.Sprintf("%s-master", postgresKubernetes.Metadata.Name)
 
 	//export kubernetes service name
