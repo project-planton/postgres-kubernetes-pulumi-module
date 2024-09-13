@@ -5,7 +5,9 @@ import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-module/pkg/outputs"
+	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"strconv"
 )
 
 type Locals struct {
@@ -17,6 +19,7 @@ type Locals struct {
 	Namespace               string
 	PostgresKubernetes      *postgreskubernetes.PostgresKubernetes
 	PostgresPodSectorLabels map[string]string
+	Labels                  map[string]string
 }
 
 func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.PostgresKubernetesStackInput) *Locals {
@@ -25,6 +28,14 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.Postgr
 	locals.PostgresKubernetes = stackInput.ApiResource
 
 	postgresKubernetes := stackInput.ApiResource
+
+	locals.Labels = map[string]string{
+		kuberneteslabelkeys.Environment:  stackInput.ApiResource.Spec.EnvironmentInfo.EnvId,
+		kuberneteslabelkeys.Organization: stackInput.ApiResource.Spec.EnvironmentInfo.OrgId,
+		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
+		kuberneteslabelkeys.ResourceId:   stackInput.ApiResource.Metadata.Id,
+		kuberneteslabelkeys.ResourceKind: apiresourcekind.ApiResourceKind_postgres_kubernetes.String(),
+	}
 
 	//decide on the namespace
 	locals.Namespace = postgresKubernetes.Metadata.Id

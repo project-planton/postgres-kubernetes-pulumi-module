@@ -11,17 +11,12 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type ResourceStack struct {
-	Input  *postgreskubernetes.PostgresKubernetesStackInput
-	Labels map[string]string
-}
-
-func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
-	locals := initializeLocals(ctx, s.Input)
+func Resources(ctx *pulumi.Context, stackInput *postgreskubernetes.PostgresKubernetesStackInput) error {
+	locals := initializeLocals(ctx, stackInput)
 
 	//create kubernetes-provider from the credential in the stack-input
 	kubernetesProvider, err := pulumikubernetesprovider.GetWithKubernetesClusterCredential(ctx,
-		s.Input.KubernetesClusterCredential, "kubernetes")
+		stackInput.KubernetesClusterCredential, "kubernetes")
 	if err != nil {
 		return errors.Wrap(err, "failed to setup gcp provider")
 	}
@@ -32,7 +27,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		&kubernetescorev1.NamespaceArgs{
 			Metadata: metav1.ObjectMetaPtrInput(&metav1.ObjectMetaArgs{
 				Name:   pulumi.String(locals.Namespace),
-				Labels: pulumi.ToStringMap(s.Labels),
+				Labels: pulumi.ToStringMap(locals.Labels),
 			}),
 		}, pulumi.Timeouts(&pulumi.CustomTimeouts{Create: "5s", Update: "5s", Delete: "5s"}),
 		pulumi.Provider(kubernetesProvider))
@@ -49,7 +44,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 				// a kubernetes service with the same name is created by the operator
 				Name:      pulumi.Sprintf("%s-%s", vars.TeamId, locals.PostgresKubernetes.Metadata.Id),
 				Namespace: createdNamespace.Metadata.Name(),
-				Labels:    pulumi.ToStringMap(s.Labels),
+				Labels:    pulumi.ToStringMap(locals.Labels),
 			},
 			Spec: zalandov1.PostgresqlSpecArgs{
 				NumberOfInstances: pulumi.Int(locals.PostgresKubernetes.Spec.Container.Replicas),
