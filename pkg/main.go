@@ -3,7 +3,7 @@ package pkg
 import (
 	"github.com/pkg/errors"
 	zalandov1 "github.com/plantoncloud/kubernetes-crd-pulumi-types/pkg/zalandooperator/acid/v1"
-	"github.com/plantoncloud/planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
+	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/pulumikubernetesprovider"
 	kubernetescorev1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/core/v1"
 	kubernetesmetav1 "github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes/meta/v1"
