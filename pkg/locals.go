@@ -1,10 +1,9 @@
 package pkg
 
 import (
+	postgreskubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/kubernetes/postgreskubernetes/v1"
 	"fmt"
 	"github.com/plantoncloud/postgres-kubernetes-pulumi-module/pkg/outputs"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/kubernetes/postgreskubernetes"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"strconv"
@@ -17,12 +16,12 @@ type Locals struct {
 	KubeServiceFqdn         string
 	KubeServiceName         string
 	Namespace               string
-	PostgresKubernetes      *postgreskubernetes.PostgresKubernetes
+	PostgresKubernetes      *postgreskubernetesv1.PostgresKubernetes
 	PostgresPodSectorLabels map[string]string
 	Labels                  map[string]string
 }
 
-func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.PostgresKubernetesStackInput) *Locals {
+func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.PostgresKubernetesStackInput) *Locals {
 	locals := &Locals{}
 	//assign value for the local variable to make it available across the module.
 	locals.PostgresKubernetes = stackInput.Target
@@ -34,7 +33,7 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.Postgr
 		kuberneteslabelkeys.Organization: stackInput.Target.Spec.EnvironmentInfo.OrgId,
 		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
 		kuberneteslabelkeys.ResourceId:   stackInput.Target.Metadata.Id,
-		kuberneteslabelkeys.ResourceKind: apiresourcekind.ApiResourceKind_postgres_kubernetes.String(),
+		kuberneteslabelkeys.ResourceKind: "postgres_kubernetes",
 	}
 
 	//decide on the namespace
@@ -43,7 +42,7 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetes.Postgr
 	ctx.Export(outputs.Namespace, pulumi.String(locals.Namespace))
 
 	locals.PostgresPodSectorLabels = map[string]string{
-		"planton.cloud/resource-kind": apiresourcekind.ApiResourceKind_postgres_kubernetes.String(),
+		"planton.cloud/resource-kind": "postgres_kubernetes",
 		"planton.cloud/resource-id":   postgresKubernetes.Metadata.Id,
 	}
 
