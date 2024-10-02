@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	postgreskubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/kubernetes/postgreskubernetes/v1"
+	postgreskubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/provider/kubernetes/postgreskubernetes/v1"
 	"github.com/pkg/errors"
 	zalandov1 "github.com/plantoncloud/kubernetes-crd-pulumi-types/pkg/zalandooperator/acid/v1"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/pulumikubernetesprovider"
