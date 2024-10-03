@@ -24,19 +24,19 @@ type Locals struct {
 func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.PostgresKubernetesStackInput) *Locals {
 	locals := &Locals{}
 
-	postgresKubernetes := stackInput.Target
-
 	//if the id is empty, use name as id
-	if postgresKubernetes.Metadata.Id == "" {
-		postgresKubernetes.Metadata.Id = postgresKubernetes.Metadata.Name
+	if stackInput.Target.Metadata.Id == "" {
+		stackInput.Target.Metadata.Id = stackInput.Target.Metadata.Name
 	}
+
+	postgresKubernetes := stackInput.Target
 
 	//assign value for the local variable to make it available across the module.
 	locals.PostgresKubernetes = postgresKubernetes
 
 	locals.Labels = map[string]string{
 		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
-		kuberneteslabelkeys.ResourceId:   stackInput.Target.Metadata.Id,
+		kuberneteslabelkeys.ResourceId:   postgresKubernetes.Metadata.Id,
 		kuberneteslabelkeys.ResourceKind: "postgres_kubernetes",
 	}
 
