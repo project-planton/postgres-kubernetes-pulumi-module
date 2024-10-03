@@ -23,17 +23,26 @@ type Locals struct {
 
 func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.PostgresKubernetesStackInput) *Locals {
 	locals := &Locals{}
-	//assign value for the local variable to make it available across the module.
-	locals.PostgresKubernetes = stackInput.Target
 
 	postgresKubernetes := stackInput.Target
 
+	//if the id is empty, use name as id
+	if postgresKubernetes.Metadata.Id == "" {
+		postgresKubernetes.Metadata.Id = postgresKubernetes.Metadata.Name
+	}
+
+	//assign value for the local variable to make it available across the module.
+	locals.PostgresKubernetes = postgresKubernetes
+
 	locals.Labels = map[string]string{
-		kuberneteslabelkeys.Environment:  stackInput.Target.Spec.EnvironmentInfo.EnvId,
-		kuberneteslabelkeys.Organization: stackInput.Target.Spec.EnvironmentInfo.OrgId,
 		kuberneteslabelkeys.Resource:     strconv.FormatBool(true),
 		kuberneteslabelkeys.ResourceId:   stackInput.Target.Metadata.Id,
 		kuberneteslabelkeys.ResourceKind: "postgres_kubernetes",
+	}
+
+	if postgresKubernetes.Spec.EnvironmentInfo != nil {
+		locals.Labels[kuberneteslabelkeys.Environment] = postgresKubernetes.Spec.EnvironmentInfo.EnvId
+		locals.Labels[kuberneteslabelkeys.Organization] = postgresKubernetes.Spec.EnvironmentInfo.OrgId
 	}
 
 	//decide on the namespace
@@ -46,8 +55,9 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.Post
 		"planton.cloud/resource-id":   postgresKubernetes.Metadata.Id,
 	}
 
-	ctx.Export(outputs.PostgresUserCredentialsSecretName, pulumi.Sprintf("postgres.db-%s.credentials.postgresql.acid.zalan.do",
-		postgresKubernetes.Metadata.Id))
+	ctx.Export(outputs.PostgresUserCredentialsSecretName,
+		pulumi.Sprintf("postgres.db-%s.credentials.postgresql.acid.zalan.do",
+			postgresKubernetes.Metadata.Id))
 	ctx.Export(outputs.PostgresUsernameSecretKey, pulumi.String("username"))
 	ctx.Export(outputs.PostgresPasswordSecretKey, pulumi.String("password"))
 
