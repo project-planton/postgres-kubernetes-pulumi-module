@@ -1,10 +1,10 @@
 package pkg
 
 import (
-	postgreskubernetesv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/provider/kubernetes/postgreskubernetes/v1"
+	postgreskubernetesv1 "buf.build/gen/go/project-planton/apis/protocolbuffers/go/project/planton/provider/kubernetes/postgreskubernetes/v1"
 	"fmt"
-	"github.com/plantoncloud/postgres-kubernetes-pulumi-module/pkg/outputs"
-	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
+	"github.com/project-planton/postgres-kubernetes-pulumi-module/pkg/outputs"
+	"github.com/project-planton/pulumi-module-golang-commons/pkg/provider/kubernetes/kuberneteslabelkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"strconv"
 )
