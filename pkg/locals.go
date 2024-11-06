@@ -40,9 +40,13 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.Post
 		kuberneteslabelkeys.ResourceKind: "postgres_kubernetes",
 	}
 
-	if postgresKubernetes.Spec.EnvironmentInfo != nil {
-		locals.Labels[kuberneteslabelkeys.Environment] = postgresKubernetes.Spec.EnvironmentInfo.EnvId
-		locals.Labels[kuberneteslabelkeys.Organization] = postgresKubernetes.Spec.EnvironmentInfo.OrgId
+	if postgresKubernetes.Metadata.Org != "" {
+		locals.Labels[kuberneteslabelkeys.Organization] = postgresKubernetes.Metadata.Org
+	}
+
+	if postgresKubernetes.Metadata.Env != nil {
+		locals.Labels[kuberneteslabelkeys.Environment] = postgresKubernetes.Metadata.Env.Id
+
 	}
 
 	//decide on the namespace
