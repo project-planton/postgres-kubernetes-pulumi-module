@@ -83,15 +83,15 @@ func initializeLocals(ctx *pulumi.Context, stackInput *postgreskubernetesv1.Post
 
 	if postgresKubernetes.Spec.Ingress == nil ||
 		!postgresKubernetes.Spec.Ingress.IsEnabled ||
-		postgresKubernetes.Spec.Ingress.EndpointDomainName == "" {
+		postgresKubernetes.Spec.Ingress.DnsDomain == "" {
 		return locals
 	}
 
 	locals.IngressExternalHostname = fmt.Sprintf("%s.%s", postgresKubernetes.Metadata.Id,
-		postgresKubernetes.Spec.Ingress.EndpointDomainName)
+		postgresKubernetes.Spec.Ingress.DnsDomain)
 
 	locals.IngressInternalHostname = fmt.Sprintf("%s-internal.%s", postgresKubernetes.Metadata.Id,
-		postgresKubernetes.Spec.Ingress.EndpointDomainName)
+		postgresKubernetes.Spec.Ingress.DnsDomain)
 
 	//export ingress hostnames
 	ctx.Export(outputs.IngressExternalHostname, pulumi.String(locals.IngressExternalHostname))
